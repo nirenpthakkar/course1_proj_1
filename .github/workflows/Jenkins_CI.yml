@@ -2,10 +2,10 @@ name: Jenkins CI Pipeline
 
 on: [push]
 
-env:
-  my_user_var: ${{ secrets.JENKINS_USER }}
-  my_api_token: ${{ secrets.JENKINS_API_TOKEN }}
-  my_token_name: ${{ vars.TOKEN_NAME }}
+#env:
+ # my_user_var: ${{ secrets.JENKINS_USER }}
+ # my_api_token: ${{ secrets.JENKINS_API_TOKEN }}
+ # my_token_name: ${{ vars.TOKEN_NAME }}
   
 jobs:
   integration_job:
@@ -16,18 +16,22 @@ jobs:
 
       - name: Trigger Jenkins Job
         run: |
-          # Get the CSRF crumb
-          CRUMB_JSON=$(curl -s -u "$my_user_var:$my_api_token" \
+          echo "Getting CSRF crumb..."
+          CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_API_TOKEN" \
             https://94a60f8a7dcf.ngrok-free.app/crumbIssuer/api/json)
-
-          echo "CRUMB_JSON: $CRUMB_JSON"  # Debug: log response
-
-          # Parse the crumb and header field
+      
+          echo "CRUMB_JSON: $CRUMB_JSON"
+      
           CRUMB=$(echo "$CRUMB_JSON" | jq -r '.crumb')
           CRUMB_FIELD=$(echo "$CRUMB_JSON" | jq -r '.crumbRequestField')
+      
+          echo "Triggering Jenkins job with crumb..."
+          curl -X POST "https://94a60f8a7dcf.ngrok-free.app/job/course_end_project_1/build?token=$TOKEN_NAME" \
+            --user "$JENKINS_USER:$JENKINS_API_TOKEN" \
+            -H "$CRUMB_FIELD: $CRUMB"
+        env:
+          JENKINS_USER: ${{ secrets.JENKINS_USER }}
+          JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
+          TOKEN_NAME: ${{ vars.TOKEN_NAME }}
 
-          # Trigger the Jenkins job
-          curl -X POST "https://94a60f8a7dcf.ngrok-free.app/job/course_end_project_1/build?token=$my_token_name" \
-          --user "$my_user_var:$my_api_token" \
-          -H "$CRUMB_FIELD: $CRUMB"
 
