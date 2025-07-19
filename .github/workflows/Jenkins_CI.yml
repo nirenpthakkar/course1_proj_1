@@ -1,0 +1,19 @@
+name: Jenkins CI Pipeline
+
+on: [push]
+
+env:
+  my_user_var: ${{ vars.JENKINS_USER }}
+  my_api_token: ${{ vars.JENKINS_API_TOKEN }}
+
+jobs:
+  integration_job:
+    runs-on: ubuntu_latest
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v4
+
+      - name: Trigger Jenkins Job
+        run: |
+          curl -X POST "https://94a60f8a7dcf.ngrok-free.app/job/course_end_project_1/build?token=$TOKEN_NAME" \
+          --user "$my_user_var:$my_api_token"
